@@ -3,6 +3,7 @@ use axum::http::StatusCode;
 use axum::routing::{get, post, put};
 use axum::Router;
 use cf::config::CfConfig;
+use cf::mongo_api;
 use mongodb::Client;
 use tower_http::cors::Any;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
@@ -35,6 +36,7 @@ async fn main() -> anyhow::Result<()> {
     let config = CfConfig::load("config.toml")?;
 
     let client = Client::with_uri_str(config.db_url()).await?;
+    mongo_api::init(client);
 
     let app = create_app();
 
