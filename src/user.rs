@@ -1,10 +1,9 @@
-pub mod config;
-pub mod mongo_api;
-pub mod utils;
-pub mod token;
-pub mod user;
-
+use axum::extract::State;
+use axum::Json;
+use mongodb::{bson::Bson, results::InsertOneResult, Database};
 use serde::{Deserialize, Serialize};
+
+use crate::utils;
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -38,10 +37,40 @@ pub struct UserProfile {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct UserCreationDB {
+    create_at: String,
+    #[serde(flatten)]
+    user_creation: UserCreation
+}
+impl From<UserCreation>  for UserCreationDB {
+    fn from(value: UserCreation) -> Self {
+        let mut u = UserCreationDB{
+            create_at: utils::now(),
+            user_creation:value
+        };
+
+        u.user_creation.password=utils::encrypt(&*u.user_creation.password).unwrap();
+        u
+    }
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserCreation {
     password: String,
     #[serde(flatten)]
     user_base: UserBase,
+}
+
+const COLLECTION : &str = "user";
+
+pub async fn create_user(db: State<Database>, Json(payload): Json<UserCreation>) -> Result<String, String>{
+    let c = db.collection(COLLECTION);
+    let ud: UserCreationDB = payload.into();
+    c.insert_one(ud, None).await.map(|r|match r.inserted_id {
+        Bson::ObjectId(id)=> id.to_string(),
+        _ => "".to_owned()
+    }).map_err(|e|e.to_string())
 }
 
 

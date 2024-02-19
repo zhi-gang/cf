@@ -24,3 +24,5 @@ bcrypt = "0.15.0"
 jsonwebtoken = "9.2.0"
 mongodb = "2.8.1"
 futures = "0.3.30"
+
+[build-dependencies]

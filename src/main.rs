@@ -1,10 +1,10 @@
-
-use axum::http::StatusCode;
-use axum::routing::{get, post, put};
+// use axum::http::StatusCode;
+use axum::routing::{get, post};
 use axum::Router;
 use cf::config::CfConfig;
-use cf::mongo_api;
-use mongodb::Client;
+// use cf::mongo_api;
+use cf::user::create_user;
+use mongodb::{Client, Database};
 use tower_http::cors::Any;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 use tracing::info;
@@ -31,37 +31,45 @@ async fn main() -> anyhow::Result<()> {
         .init();
     color_eyre::install().unwrap();
 
-    info!("Start Knolwdge at {:?}", std::env::current_dir().unwrap());
+    info!("Start at {:?}", std::env::current_dir().unwrap());
 
-    let config = CfConfig::load("config.toml")?;
+    let config = CfConfig::load("src/config/config.toml")?;
 
     let client = Client::with_uri_str(config.db_url()).await?;
-    mongo_api::init(client);
+    let user_db = client.database("user");
+   
+    // mongo_api::init(client);
 
-    let app = create_app();
+    let mut app = create_app();
+    app = user_router(app, &user_db);
+    app = app_layer(app);
+    //start http server
+    let http_service_url = config.service_url();
+    println!("http://s{}",http_service_url);
+    let listener = tokio::net::TcpListener::bind(&*http_service_url)
+        .await
+        .unwrap();
+    info!("Listening on {}", http_service_url);
+    axum::serve(listener, app).await.unwrap();
 
-     //start http server
-     let http_service_url = config.service_url();
-     let listener = tokio::net::TcpListener::bind(&*http_service_url)
-         .await
-         .unwrap();
-     info!("Listening on {}",http_service_url);
-     axum::serve(listener, app).await.unwrap();
-
-   Ok(())
+    Ok(())
 }
 
 fn create_app() -> Router {
-    Router::new()
-        .route("/cf/v1", get(|| async { "Hello" }))
-        .layer(
-            tower_http::cors::CorsLayer::new()
-                .allow_methods(Any)
-                .allow_headers(Any)
-                .allow_origin(Any),
-        )
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(DefaultMakeSpan::default().include_headers(true)),
-        )
+    Router::new().route("/cf/v1", get(|| async { "Hello" }))
+}
+fn user_router(app: Router, user_db: &Database) -> Router {
+    app.route("/cf/user", post(create_user).with_state(user_db.clone()))
+}
+
+fn app_layer(app: Router) -> Router {
+    app.layer(
+        tower_http::cors::CorsLayer::new()
+            .allow_methods(Any)
+            .allow_headers(Any)
+            .allow_origin(Any),
+    )
+    .layer(
+        TraceLayer::new_for_http().make_span_with(DefaultMakeSpan::default().include_headers(true)),
+    )
 }

@@ -1,0 +1,41 @@
+{"timestamp":"2024-02-19T07:41:13.559158Z","level":"INFO","fields":{"message":"Start Knolwdge at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T07:41:13.559515Z","level":"INFO","fields":{"message":"Load configuation file config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T07:43:16.059005Z","level":"INFO","fields":{"message":"Start Knolwdge at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T07:43:16.059318Z","level":"INFO","fields":{"message":"Load configuation file src/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T07:50:01.007544Z","level":"INFO","fields":{"message":"Start Knolwdge at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T07:50:01.007878Z","level":"INFO","fields":{"message":"Load configuation file config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:17:08.316841Z","level":"INFO","fields":{"message":"Start Knolwdge at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:17:08.317227Z","level":"INFO","fields":{"message":"Load configuation file config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:18:26.923706Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:18:26.924004Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:20:00.794700Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:20:00.795078Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:20:29.544497Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:20:29.544928Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:20:45.988372Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:20:45.988580Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:20:55.126653Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:20:55.126983Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:23:00.687677Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:23:00.688072Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:24:20.813551Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:24:20.813838Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:24:41.581809Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:24:41.582142Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:25:22.063416Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:25:22.063689Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:28:40.143745Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:28:40.144030Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:28:40.147402Z","level":"INFO","fields":{"message":"Listening on localhost:8081"},"target":"cf"}
+{"timestamp":"2024-02-19T08:29:41.857616Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:29:41.858013Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:29:41.862534Z","level":"INFO","fields":{"message":"Listening on 0.0.0.0:8081"},"target":"cf"}
+{"timestamp":"2024-02-19T08:30:42.040133Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:30:42.040357Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:30:42.048572Z","level":"INFO","fields":{"message":"Listening on localhost:8081"},"target":"cf"}
+{"timestamp":"2024-02-19T08:47:45.425077Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:47:45.425488Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:47:45.432868Z","level":"INFO","fields":{"message":"Listening on localhost:8081"},"target":"cf"}
+{"timestamp":"2024-02-19T08:50:27.237213Z","level":"INFO","fields":{"message":"Start at \"/Users/zhigangyan/code/RustProjects/cf\""},"target":"cf"}
+{"timestamp":"2024-02-19T08:50:27.237656Z","level":"INFO","fields":{"message":"Load configuation file src/config/config.toml"},"target":"cf::config"}
+{"timestamp":"2024-02-19T08:50:27.245997Z","level":"INFO","fields":{"message":"Listening on localhost:8081"},"target":"cf"}

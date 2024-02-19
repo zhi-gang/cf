@@ -31,7 +31,7 @@ impl CfConfig {
 
      /// Make rest service URL string 
      pub fn service_url(&self)  -> String {
-        format!("http://{}:{}", self.http.host, self.http.port)
+        format!("{}:{}", self.http.host, self.http.port)
     }
 }
 
@@ -41,7 +41,7 @@ mod test {
 
     #[test]
     fn test() {
-        let cf=  CfConfig::load("src/config.toml").expect("load configration file");
+        let cf=  CfConfig::load("src/config/config.toml").expect("load configration file");
         assert_eq!(cf.db.host, "127.0.0.1");
         assert_eq!(cf.db.port, 27017);
         assert_eq!(cf.db_url(), "mongodb://127.0.0.1:27017");
