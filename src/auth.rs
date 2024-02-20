@@ -2,7 +2,7 @@ use crate::user::{UserInDB, UserProfile};
 use crate::{token, utils};
 use axum::Json;
 use axum::{
-    extract::{Path, State},
+    extract::State,
     http::StatusCode,
 };
 use mongodb::bson::doc;
