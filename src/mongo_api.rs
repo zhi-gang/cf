@@ -76,7 +76,7 @@ pub async fn find_docs(
 
 #[cfg(test)]
 mod test {
-    use mongodb::bson::{doc, Bson};
+    use mongodb::bson::doc;
 
     use super::*;
 
@@ -138,10 +138,10 @@ mod test {
         
         let db = client.database("db");
         let c: Collection<Configurations> = db.collection("config");
-        let r = c.insert_one(doc.clone(), None).await.expect("1");
+        let _r = c.insert_one(doc.clone(), None).await.expect("1");
         let f = c.find_one(doc!{"key":"a"}, None).await.expect("2");
         println!("sss {:?}", serde_json::from_str::<Value>(&*f.unwrap().value).unwrap());
-        let u = c.update_many(doc!{"key":"a"}, doc!{"$set": {"value":val2_json}}, None).await.expect("2");
+        let _u = c.update_many(doc!{"key":"a"}, doc!{"$set": {"value":val2_json}}, None).await.expect("2");
         let f2 = c.find_one(doc!{"key":"a"}, None).await.expect("2");
         println!("sss {:?}", f2);
         c.delete_many(doc!{"key":"a"}, None).await.expect("2");

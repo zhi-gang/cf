@@ -5,6 +5,8 @@ use axum::{
     http::StatusCode,
 };
 use futures::stream::TryStreamExt;
+use mongodb::bson;
+use mongodb::bson::oid::ObjectId;
 use mongodb::{
     bson::{doc, oid, Bson},
     Collection, Database,
@@ -17,28 +19,23 @@ pub struct ConfigurationItems {
     key: String,
     value: String, //json string
 }
-// #[derive(Debug, Serialize, Deserialize, Clone)]
-// struct ConfigValue {
-//    host:String,
-//    port:u32
-// }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserBase {
-    name: String,
-    phone: String,
+    pub name: String,
+    pub phone: String,
     #[serde(default)]
-    roles: Vec<String>,
+    pub roles: Vec<String>,
     #[serde(default)]
-    permissions: Vec<String>,
+    pub permissions: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserProfile {
-    _id: String,
-    create_at: String,
+    pub _id: String,
+    pub create_at: String,
     #[serde(flatten)]
-    user_base: UserBase,
+    pub user_base: UserBase,
 }
 
 fn pick_id(oid: Bson) -> Option<String> {
@@ -78,14 +75,6 @@ impl From<UserCreation> for UserCreationDB {
     }
 }
 
-// #[derive(Debug, Serialize, Deserialize, Clone)]
-// pub struct UserInDB {
-//     _id: String,
-//     create_at: String,
-//     #[serde(flatten)]
-//     user_creation: UserCreation,
-// }
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserCreation {
     password: String,
@@ -120,15 +109,40 @@ pub async fn create_user(
             (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
         })
 }
-
-pub async fn find_user_by_id(
+pub async fn update_user(
     db: State<Database>,
-    Path(user_id): Path<String>,
+    Json(payload): Json<UserProfile>,
 ) -> Result<String, (StatusCode, String)> {
-    let oid = oid::ObjectId::parse_str(&*user_id).map_err(|e| {
+    let c: Collection<UserInDB> = db.collection(COLLECTION);
+    let oid = build_obj_id(&*payload._id)?;
+
+    let filter = doc! { "_id": Bson::ObjectId(oid) };
+    let mut update_doc = bson::to_document(&payload).map_err(|e|{
+        error!("build update doc faield: {:?}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
+    update_doc.remove("_id");
+    let update = doc! {"$set": update_doc};
+
+    c.update_one(filter, update, None).await.map(|r|{
+        serde_json::to_string(&r).unwrap()
+    }).map_err(|e|{
+        error!("update faield: {:?}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })
+}
+fn build_obj_id(id: &str) -> Result<ObjectId, (StatusCode, String)> {
+    let oid = oid::ObjectId::parse_str(id).map_err(|e| {
         error!("parse id failed , {:?}", e);
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })?;
+    Ok(oid)
+}
+pub async fn find_user_by_id(
+    db: State<Database>, 
+    Path(user_id): Path<String>,
+) -> Result<String, (StatusCode, String)> {
+    let oid = build_obj_id(&*user_id)?;
     let c: Collection<UserInDB> = db.collection(COLLECTION);
     let f = c
         .find_one(doc! {"_id":Bson::ObjectId(oid)}, None)
@@ -169,9 +183,8 @@ pub async fn find_user_by_name(
 
 #[cfg(test)]
 mod test {
-    use chrono::Local;
-
     use super::*;
+    use chrono::Local;
 
     #[test]
     fn struct_test() {

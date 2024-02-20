@@ -3,7 +3,7 @@ use axum::routing::{get, post};
 use axum::Router;
 use cf::config::CfConfig;
 // use cf::mongo_api;
-use cf::user::{create_user, find_user_by_id, find_user_by_name};
+use cf::user::{create_user, find_user_by_id, find_user_by_name, update_user};
 use mongodb::{Client, Database};
 use tower_http::cors::Any;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
@@ -59,15 +59,21 @@ fn create_app() -> Router {
     Router::new().route("/cf/v1", get(|| async { "Hello" }))
 }
 fn user_router(app: Router, user_db: &Database) -> Router {
-    app.route("/cf/user", post(create_user).with_state(user_db.clone()))
-        .route(
-            "/cf/user/id/:id",
-            get(find_user_by_id).with_state(user_db.clone()),
-        )
-        .route(
-            "/cf/user/name/:name",
-            get(find_user_by_name).with_state(user_db.clone()),
-        )
+    app.route(
+        "/cf/user",
+        post(create_user)
+            .with_state(user_db.clone())
+            .put(update_user)
+            .with_state(user_db.clone()),
+    )
+    .route(
+        "/cf/user/id/:id",
+        get(find_user_by_id).with_state(user_db.clone()),
+    )
+    .route(
+        "/cf/user/name/:name",
+        get(find_user_by_name).with_state(user_db.clone()),
+    )
 }
 
 fn app_layer(app: Router) -> Router {
