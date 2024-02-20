@@ -1,8 +1,6 @@
-// use axum::http::StatusCode;
-use axum::routing::{delete, get, post};
+use axum::routing::{get, post};
 use axum::Router;
 use cf::config::CfConfig;
-// use cf::mongo_api;
 use cf::user::{create_user, delete_user, find_user_by_id, find_user_by_name, update_user};
 use mongodb::{Client, Database};
 use tower_http::cors::Any;
@@ -31,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
     color_eyre::install().unwrap();
 
-    info!("Start at {:?}", std::env::current_dir().unwrap());
+    info!("Start from {:?}", std::env::current_dir().unwrap());
 
     let config = CfConfig::load("src/config/config.toml")?;
 
@@ -45,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
     app = app_layer(app);
     //start http server
     let http_service_url = config.service_url();
-    println!("http://s{}", http_service_url);
+    info!("Start service @ http://s{}", http_service_url);
     let listener = tokio::net::TcpListener::bind(&*http_service_url)
         .await
         .unwrap();
