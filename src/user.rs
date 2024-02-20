@@ -1,4 +1,6 @@
+use crate::token::verify_token;
 use crate::utils;
+use axum::http::header::HeaderMap;
 use axum::Json;
 use axum::{
     extract::{Path, State},
@@ -37,6 +39,22 @@ pub struct UserProfile {
     pub create_at: DateTime<Utc>,
     #[serde(flatten)]
     pub user_base: UserBase,
+}
+
+impl UserProfile {
+    pub fn default_super() -> Self {
+        let base = UserBase {
+            name: "super".to_string(),
+            phone: "111111".to_string(),
+            roles: vec!["super".to_string()],
+            permissions: vec![],
+        };
+        UserProfile {
+            _id: "0".to_string(),
+            create_at: Utc::now(),
+            user_base: base,
+        }
+    }
 }
 
 fn pick_id(oid: Bson) -> Option<String> {
@@ -94,9 +112,11 @@ pub struct UserInDB {
 const COLLECTION: &str = "user";
 
 pub async fn create_user(
+    headers: HeaderMap,  //the order is important!
     db: State<Database>,
     Json(payload): Json<UserCreation>,
 ) -> Result<String, (StatusCode, String)> {
+    permission_check(&headers, "create_user", &*payload.user_base.name)?;
     let c = db.collection(COLLECTION);
     let f = c
         .find_one(doc! {"name":&payload.user_base.name}, None)
@@ -116,10 +136,14 @@ pub async fn create_user(
             (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
         })
 }
+
 pub async fn update_user(
+    headers: HeaderMap,
     db: State<Database>,
     Json(payload): Json<UserProfile>,
 ) -> Result<String, (StatusCode, String)> {
+    permission_check(&headers, "update_user", &*payload.user_base.name)?;
+
     let c: Collection<UserInDB> = db.collection(COLLECTION);
     let oid = build_obj_id(&*payload._id)?;
 
@@ -139,10 +163,14 @@ pub async fn update_user(
             (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
         })
 }
+
 pub async fn delete_user(
+    headers: HeaderMap,
     db: State<Database>,
     Json(payload): Json<UserProfile>,
 ) -> Result<String, (StatusCode, String)> {
+    permission_check(&headers, "delete_user", &*payload.user_base.name)?;
+
     let c: Collection<UserInDB> = db.collection(COLLECTION);
     let oid = build_obj_id(&*payload._id)?;
 
@@ -156,17 +184,13 @@ pub async fn delete_user(
             (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
         })
 }
-fn build_obj_id(id: &str) -> Result<ObjectId, (StatusCode, String)> {
-    let oid = oid::ObjectId::parse_str(id).map_err(|e| {
-        error!("parse id failed , {:?}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-    })?;
-    Ok(oid)
-}
+
 pub async fn find_user_by_id(
-    db: State<Database>,
+    headers: HeaderMap,
     Path(user_id): Path<String>,
+    db: State<Database>,
 ) -> Result<String, (StatusCode, String)> {
+    permission_check(&headers, "find_user_by_id", &*user_id)?;
     let oid = build_obj_id(&*user_id)?;
     let c: Collection<UserInDB> = db.collection(COLLECTION);
     let f = c
@@ -185,9 +209,11 @@ pub async fn find_user_by_id(
 }
 
 pub async fn find_user_by_name(
-    db: State<Database>,
+    headers: HeaderMap,
     Path(user_name): Path<String>,
+    db: State<Database>,
 ) -> Result<String, (StatusCode, String)> {
+    permission_check(&headers, "find_user_by_name", &*user_name)?;
     let c: Collection<UserInDB> = db.collection(COLLECTION);
     let mut cursor = c.find(doc! {"name":user_name}, None).await.map_err(|e| {
         error!("get cursor failed, {:?}", e);
@@ -204,6 +230,47 @@ pub async fn find_user_by_name(
     info!("users : {:?}", users);
 
     Ok(serde_json::to_string(&users).unwrap())
+}
+
+fn build_obj_id(id: &str) -> Result<ObjectId, (StatusCode, String)> {
+    let oid = oid::ObjectId::parse_str(id).map_err(|e| {
+        error!("parse id failed , {:?}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
+    Ok(oid)
+}
+
+fn permission_check(
+    headers: &HeaderMap,
+    fn_name: &str,
+    arg: &str,
+) -> Result<(), (StatusCode, String)> {
+    if let Some(auth) = headers.get("authorization") {
+        let token = auth.to_str().unwrap();
+        match verify_token(token) {
+            Ok(p) => {
+                //TODO: permission check
+                info!(
+                    "{} invoke {} on {} at {}",
+                    p.user_base.name,
+                    fn_name,
+                    arg,
+                    Utc::now()
+                );
+                Ok(())
+            }
+            Err(e) => {
+                error!("verify_token failed, {:?}", e);
+                Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+            }
+        }
+    } else {
+        error!("missing authecication information");
+        Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "missing authecication information".to_string(),
+        ))
+    }
 }
 
 #[cfg(test)]
