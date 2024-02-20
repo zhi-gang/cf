@@ -131,6 +131,22 @@ pub async fn update_user(
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })
 }
+pub async fn delete_user(
+    db: State<Database>,
+    Json(payload): Json<UserProfile>,
+) -> Result<String, (StatusCode, String)> {
+    let c: Collection<UserInDB> = db.collection(COLLECTION);
+    let oid = build_obj_id(&*payload._id)?;
+
+    let filter = doc! { "_id": Bson::ObjectId(oid) };
+
+    c.delete_one(filter,  None).await.map(|r|{
+        serde_json::to_string(&r).unwrap()
+    }).map_err(|e|{
+        error!("delete faield: {:?}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })
+}
 fn build_obj_id(id: &str) -> Result<ObjectId, (StatusCode, String)> {
     let oid = oid::ObjectId::parse_str(id).map_err(|e| {
         error!("parse id failed , {:?}", e);
