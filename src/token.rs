@@ -3,7 +3,6 @@ use jsonwebtoken::{
     decode, encode, errors::Result, Algorithm, DecodingKey, EncodingKey, Header, Validation,
 };
 use serde::{Deserialize, Serialize};
-// use jsonwebtoken::errors::ErrorKind;
 use super::user::UserProfile;
 
 #[derive(Serialize, Deserialize)]
@@ -53,6 +52,7 @@ mod test {
     use crate::user::UserBase;
 
     use super::*;
+    use chrono::Utc;
     use jsonwebtoken::{decode_header, errors::ErrorKind};
     // Example user profile struct
 
@@ -66,7 +66,7 @@ mod test {
         };
         let user_profile = UserProfile {
             _id: "122333".to_string(),
-            create_at: "abc".to_string(),
+            create_at: Utc::now(),
             user_base: user,
         };
 

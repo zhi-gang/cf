@@ -8,6 +8,7 @@ use mongodb::{
     Client, Collection,
 };
 
+
 static mut CLIENT: Option<Client> = None;
 
 pub fn init(client: Client) {
@@ -105,46 +106,54 @@ mod test {
     }
 
     use serde::{Deserialize, Serialize};
-
+    use chrono::{DateTime, Utc};
     #[derive(Debug, Serialize, Deserialize, Clone)]
     struct Configurations {
         key: String,
-        value: String,  //json string
+        value: String, //json string
+        ts: DateTime<Utc>,
     }
     #[derive(Debug, Serialize, Deserialize, Clone)]
     struct Value {
-       host:String,
-       port:u32
+        host: String,
+        port: u32,
     }
-
 
     #[tokio::test]
     async fn test2() {
         let val = Value {
-            host:"localhost".to_string(),
-            port :3333
+            host: "localhost".to_string(),
+            port: 3333,
         };
         let val_json = serde_json::to_string(&val).unwrap();
         let doc = Configurations {
             key: "a".to_string(),
             value: val_json,
+            ts: Utc::now()
         };
         let val2 = Value {
-            host:"localhost".to_string(),
-            port :1111
+            host: "localhost".to_string(),
+            port: 1111,
         };
         let val2_json = serde_json::to_string(&val2).unwrap();
-        let client = Client::with_uri_str("mongodb://127.0.0.1:27017").await.expect("connect to db");
-        
+        let client = Client::with_uri_str("mongodb://127.0.0.1:27017")
+            .await
+            .expect("connect to db");
+
         let db = client.database("db");
         let c: Collection<Configurations> = db.collection("config");
         let _r = c.insert_one(doc.clone(), None).await.expect("1");
-        let f = c.find_one(doc!{"key":"a"}, None).await.expect("2");
-        println!("sss {:?}", serde_json::from_str::<Value>(&*f.unwrap().value).unwrap());
-        let _u = c.update_many(doc!{"key":"a"}, doc!{"$set": {"value":val2_json}}, None).await.expect("2");
-        let f2 = c.find_one(doc!{"key":"a"}, None).await.expect("2");
+        let f = c.find_one(doc! {"key":"a"}, None).await.expect("2");
+        println!(
+            "sss {:?}",
+            serde_json::from_str::<Value>(&*f.unwrap().value).unwrap()
+        );
+        let _u = c
+            .update_many(doc! {"key":"a"}, doc! {"$set": {"value":val2_json}}, None)
+            .await
+            .expect("2");
+        let f2 = c.find_one(doc! {"key":"a"}, None).await.expect("2");
         println!("sss {:?}", f2);
-        c.delete_many(doc!{"key":"a"}, None).await.expect("2");
-
+        c.delete_many(doc! {"key":"a"}, None).await.expect("2");
     }
 }

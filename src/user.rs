@@ -4,6 +4,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
+use chrono::{DateTime, Utc};
 use futures::stream::TryStreamExt;
 use mongodb::bson;
 use mongodb::bson::oid::ObjectId;
@@ -33,7 +34,7 @@ pub struct UserBase {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserProfile {
     pub _id: String,
-    pub create_at: String,
+    pub create_at: DateTime<Utc>,
     #[serde(flatten)]
     pub user_base: UserBase,
 }
@@ -59,14 +60,14 @@ impl From<UserInDB> for UserProfile {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserCreationDB {
-    create_at: String,
+    create_at: DateTime<Utc>,
     #[serde(flatten)]
     user_creation: UserCreation,
 }
 impl From<UserCreation> for UserCreationDB {
     fn from(value: UserCreation) -> Self {
         let mut u = UserCreationDB {
-            create_at: utils::now(),
+            create_at: Utc::now(),
             user_creation: value,
         };
 
@@ -85,7 +86,7 @@ pub struct UserCreation {
 pub struct UserInDB {
     _id: Bson,
     password: String,
-    create_at: String,
+    create_at: DateTime<Utc>,
     #[serde(flatten)]
     user_base: UserBase,
 }
@@ -117,19 +118,20 @@ pub async fn update_user(
     let oid = build_obj_id(&*payload._id)?;
 
     let filter = doc! { "_id": Bson::ObjectId(oid) };
-    let mut update_doc = bson::to_document(&payload).map_err(|e|{
+    let mut update_doc = bson::to_document(&payload).map_err(|e| {
         error!("build update doc faield: {:?}", e);
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })?;
     update_doc.remove("_id");
     let update = doc! {"$set": update_doc};
 
-    c.update_one(filter, update, None).await.map(|r|{
-        serde_json::to_string(&r).unwrap()
-    }).map_err(|e|{
-        error!("update faield: {:?}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-    })
+    c.update_one(filter, update, None)
+        .await
+        .map(|r| serde_json::to_string(&r).unwrap())
+        .map_err(|e| {
+            error!("update faield: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        })
 }
 pub async fn delete_user(
     db: State<Database>,
@@ -140,12 +142,13 @@ pub async fn delete_user(
 
     let filter = doc! { "_id": Bson::ObjectId(oid) };
 
-    c.delete_one(filter,  None).await.map(|r|{
-        serde_json::to_string(&r).unwrap()
-    }).map_err(|e|{
-        error!("delete faield: {:?}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-    })
+    c.delete_one(filter, None)
+        .await
+        .map(|r| serde_json::to_string(&r).unwrap())
+        .map_err(|e| {
+            error!("delete faield: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        })
 }
 fn build_obj_id(id: &str) -> Result<ObjectId, (StatusCode, String)> {
     let oid = oid::ObjectId::parse_str(id).map_err(|e| {
@@ -155,7 +158,7 @@ fn build_obj_id(id: &str) -> Result<ObjectId, (StatusCode, String)> {
     Ok(oid)
 }
 pub async fn find_user_by_id(
-    db: State<Database>, 
+    db: State<Database>,
     Path(user_id): Path<String>,
 ) -> Result<String, (StatusCode, String)> {
     let oid = build_obj_id(&*user_id)?;
@@ -200,7 +203,7 @@ pub async fn find_user_by_name(
 #[cfg(test)]
 mod test {
     use super::*;
-    use chrono::Local;
+    use chrono::Utc;
 
     #[test]
     fn struct_test() {
@@ -213,13 +216,13 @@ mod test {
         let user_profile = UserProfile {
             _id: "asdfbasfalsjdf".to_string(),
             user_base: user_base.clone(),
-            create_at: Local::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string(),
+            create_at: Utc::now(),
         };
 
         let str = serde_json::to_string(&user_profile).unwrap();
         println!("ss, {}", str);
 
-        let ss = r#"{"_id":"asdfbasfalsjdf","name":"zhangsang","create_at":"2024-02-19T14:47:44.984Z","phone":"12344","roles":[],"permissions":[]}"#;
+        let ss = r#"{"_id":"asdfbasfalsjdf","name":"zhangsang","create_at":"2024-02-20T13:47:49.756108+08:00","phone":"12344","roles":[],"permissions":[]}"#;
 
         let user: UserProfile = serde_json::from_str(ss).unwrap();
         assert_eq!(user.user_base.name, "zhangsang");
