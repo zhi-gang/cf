@@ -1,5 +1,6 @@
 use axum::routing::{get, post};
 use axum::Router;
+use cf::auth;
 use cf::config::CfConfig;
 use cf::user::{create_user, delete_user, find_user_by_id, find_user_by_name, update_user};
 use mongodb::{Client, Database};
@@ -40,7 +41,9 @@ async fn main() -> anyhow::Result<()> {
 
     let mut app = create_app();
     app = user_router(app, &user_db);
+    app = auth_router(app, &user_db);
     app = app_layer(app);
+
     //start http server
     let http_service_url = config.service_url();
     info!("Start service @ http://s{}", http_service_url);
@@ -75,7 +78,11 @@ fn user_router(app: Router, user_db: &Database) -> Router {
         get(find_user_by_name).with_state(user_db.clone()),
     )
 }
-
+fn auth_router(app: Router, user_db: &Database) -> Router {
+    app.route(
+        "/auth", post(auth::authenticate).with_state(user_db.clone())
+    )
+}
 fn app_layer(app: Router) -> Router {
     app.layer(
         tower_http::cors::CorsLayer::new()

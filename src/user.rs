@@ -84,11 +84,11 @@ pub struct UserCreation {
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserInDB {
-    _id: Bson,
-    password: String,
-    create_at: DateTime<Utc>,
+    pub _id: Bson,
+    pub password: String,
+    pub create_at: DateTime<Utc>,
     #[serde(flatten)]
-    user_base: UserBase,
+    pub user_base: UserBase,
 }
 
 const COLLECTION: &str = "user";
@@ -98,6 +98,12 @@ pub async fn create_user(
     Json(payload): Json<UserCreation>,
 ) -> Result<String, (StatusCode, String)> {
     let c = db.collection(COLLECTION);
+    let f = c
+        .find_one(doc! {"name":&payload.user_base.name}, None)
+        .await;
+    if let Ok(Some(_)) = f {
+        return Err((StatusCode::CONFLICT, "User Name esists".to_string()));
+    }
     let ud: UserCreationDB = payload.into();
     c.insert_one(ud, None)
         .await

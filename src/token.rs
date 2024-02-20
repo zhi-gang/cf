@@ -5,8 +5,10 @@ use jsonwebtoken::{
 use serde::{Deserialize, Serialize};
 use super::user::UserProfile;
 
+
+/// Struct for build JWT token
 #[derive(Serialize, Deserialize)]
-pub struct UserProfileEx {
+struct UserProfileEx {
     profile: UserProfile,
     exp: i64,
 }
