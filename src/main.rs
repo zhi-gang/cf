@@ -80,7 +80,7 @@ fn user_router(app: Router, user_db: &Database) -> Router {
 }
 fn auth_router(app: Router, user_db: &Database) -> Router {
     app.route(
-        "/auth", post(auth::authenticate).with_state(user_db.clone())
+        "/cf/auth", post(auth::authenticate).with_state(user_db.clone())
     )
 }
 fn app_layer(app: Router) -> Router {
