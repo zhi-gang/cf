@@ -3,7 +3,7 @@ use axum::routing::{get, post};
 use axum::Router;
 use cf::config::CfConfig;
 // use cf::mongo_api;
-use cf::user::create_user;
+use cf::user::{create_user, find_user_by_id, find_user_by_name};
 use mongodb::{Client, Database};
 use tower_http::cors::Any;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
@@ -37,7 +37,7 @@ async fn main() -> anyhow::Result<()> {
 
     let client = Client::with_uri_str(config.db_url()).await?;
     let user_db = client.database("user");
-   
+
     // mongo_api::init(client);
 
     let mut app = create_app();
@@ -45,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
     app = app_layer(app);
     //start http server
     let http_service_url = config.service_url();
-    println!("http://s{}",http_service_url);
+    println!("http://s{}", http_service_url);
     let listener = tokio::net::TcpListener::bind(&*http_service_url)
         .await
         .unwrap();
@@ -60,6 +60,14 @@ fn create_app() -> Router {
 }
 fn user_router(app: Router, user_db: &Database) -> Router {
     app.route("/cf/user", post(create_user).with_state(user_db.clone()))
+        .route(
+            "/cf/user/id/:id",
+            get(find_user_by_id).with_state(user_db.clone()),
+        )
+        .route(
+            "/cf/user/name/:name",
+            get(find_user_by_name).with_state(user_db.clone()),
+        )
 }
 
 fn app_layer(app: Router) -> Router {
