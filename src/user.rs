@@ -316,7 +316,8 @@ fn build_obj_id(id: &str) -> Result<ObjectId, (StatusCode, String)> {
     })?;
     Ok(oid)
 }
-
+/// valid the auth token
+/// if invalid return status code 401
 fn permission_check(
     headers: &HeaderMap,
     fn_name: &str,
@@ -338,13 +339,13 @@ fn permission_check(
             }
             Err(e) => {
                 error!("verify_token failed, {:?}", e);
-                Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+                Err((StatusCode::UNAUTHORIZED, e.to_string()))
             }
         }
     } else {
         error!("missing authecication information");
         Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
+            StatusCode::UNAUTHORIZED,
             "missing authecication information".to_string(),
         ))
     }
