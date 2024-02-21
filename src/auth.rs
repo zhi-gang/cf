@@ -8,7 +8,7 @@ use axum::{
 use mongodb::bson::doc;
 use mongodb::{Collection, Database};
 use serde::{Deserialize, Serialize};
-use tracing::error;
+use tracing::{debug, error};
 
 const COLLECTION: &str = "user";
 
@@ -46,12 +46,14 @@ pub async fn authenticate(
                     };
                     Ok(serde_json::to_string(&auth_res).unwrap())
                 } else {
+                    debug!("Invalid Password of {payload:?}");
                     Err((StatusCode::FORBIDDEN, "Invalid Password".to_string()))
                 }
             }
             Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
         }
     } else {
+        debug!("Invalid Password of {payload:?}");
         Err((StatusCode::CONFLICT, "User Not Found".to_string()))
     }
 }

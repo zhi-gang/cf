@@ -2,7 +2,7 @@ use axum::routing::{get, post};
 use axum::Router;
 use cf::auth;
 use cf::config::CfConfig;
-use cf::user::{create_user, delete_user, find_user_by_id, find_user_by_name, update_user};
+use cf::user::{create_user, delete_user, find_user_by_id, find_user_by_name, get_number_of_all_users, update_user};
 use mongodb::{Client, Database};
 use tower_http::cors::Any;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
@@ -76,6 +76,10 @@ fn user_router(app: Router, user_db: &Database) -> Router {
     .route(
         "/cf/user/name/:name",
         get(find_user_by_name).with_state(user_db.clone()),
+    )
+    .route(
+        "/cf/user/num",
+        get(get_number_of_all_users).with_state(user_db.clone()),
     )
 }
 fn auth_router(app: Router, user_db: &Database) -> Router {
