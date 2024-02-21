@@ -10,6 +10,7 @@ use chrono::{DateTime, Utc};
 use futures::stream::TryStreamExt;
 use mongodb::bson;
 use mongodb::bson::oid::ObjectId;
+use mongodb::options::FindOptions;
 use mongodb::{
     bson::{doc, oid, Bson},
     Collection, Database,
@@ -230,15 +231,8 @@ pub async fn find_user_by_name(
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GetUsersCfg {
-    limit: u32,
-    skip: u32,
-}
-
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct NumberOfUsers {
-    total: i32
+    total: i32,
 }
 
 pub async fn get_number_of_all_users(
@@ -254,48 +248,66 @@ pub async fn get_number_of_all_users(
             error!("get_number_of_all_users failed, {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
         })?;
-        
-    let num = cursor.try_next().await
-    .map(|res|{
-        match res {
-            Some(doc)=> doc.get_i32("total").unwrap_or(-1),
-            None => -1
-        }
-    })
-    .map_err(|e| {
-        error!("cursor browse error {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-    })?;
 
-    Ok(serde_json::to_string(&NumberOfUsers{total:num}).map_err(|e|{
-        error!("serilizer error {e:?}");
-        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-    })?)
+    let num = cursor
+        .try_next()
+        .await
+        .map(|res| match res {
+            Some(doc) => doc.get_i32("total").unwrap_or(-1),
+            None => -1,
+        })
+        .map_err(|e| {
+            error!("cursor browse error {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        })?;
+
+    Ok(
+        serde_json::to_string(&NumberOfUsers { total: num }).map_err(|e| {
+            error!("serilizer error {e:?}");
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        })?,
+    )
 }
 
-// pub async fn find_user_by_name(
-//     headers: HeaderMap,
-//     Path(user_name): Path<String>,
-//     db: State<Database>,
-// ) -> Result<String, (StatusCode, String)> {
-//     permission_check(&headers, "find_user_by_name", &*user_name)?;
-//     let c: Collection<UserInDB> = db.collection(COLLECTION);
-//     let mut cursor = c.find(doc! {"name":user_name}, None).await.map_err(|e| {
-//         error!("get cursor failed, {:?}", e);
-//         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-//     })?;
-//     let mut users = Vec::<UserProfile>::new();
-//     while let Some(user_in_db) = cursor.try_next().await.map_err(|e| {
-//         error!("cursor browse error {}", e);
-//         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-//     })? {
-//         let user_profile = UserProfile::from(user_in_db);
-//         users.push(user_profile);
-//     }
-//     info!("users : {:?}", users);
+#[derive(Debug, Serialize, Deserialize)]
+pub struct QueryUserListOptions {
+    limit: i64,
+    skip: u64,
+    sort_by_name: i8, //-1: desc, -1: asc
+}
 
-//     Ok(serde_json::to_string(&users).unwrap())
-// }
+pub async fn get_user_in_page(
+    headers: HeaderMap,
+    db: State<Database>,
+    Json(payload): Json<QueryUserListOptions>,
+) -> Result<String, (StatusCode, String)> {
+    permission_check(&headers, "get_user_in_page", "")?;
+    let c: Collection<UserInDB> = db.collection(COLLECTION);
+    let skip = Some(payload.skip);
+    let limit = Some(payload.limit);
+    let options_builder = FindOptions::builder().skip(skip).limit(limit);
+    let options_builder2 = match payload.sort_by_name {
+        -1 => options_builder.sort(doc! {"name":-1}),
+        1 => options_builder.sort(doc! {"name":1}),
+        _ => options_builder.sort(doc! {}),
+    };
+    let options = options_builder2.build();
+    let mut cursor = c.find(doc! {}, options).await.map_err(|e| {
+        error!("get cursor failed, {:?}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
+    let mut users = Vec::<UserProfile>::new();
+    while let Some(user_in_db) = cursor.try_next().await.map_err(|e| {
+        error!("cursor browse error {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })? {
+        let user_profile = UserProfile::from(user_in_db);
+        users.push(user_profile);
+    }
+    info!("users : {:?}", users);
+
+    Ok(serde_json::to_string(&users).unwrap())
+}
 
 fn build_obj_id(id: &str) -> Result<ObjectId, (StatusCode, String)> {
     let oid = oid::ObjectId::parse_str(id).map_err(|e| {
