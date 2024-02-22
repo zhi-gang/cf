@@ -1,5 +1,4 @@
-use crate::token::verify_token;
-use crate::utils;
+use crate::{permission_check, utils};
 use axum::http::header::HeaderMap;
 use axum::Json;
 use axum::{
@@ -24,7 +23,7 @@ pub struct ConfigurationItems {
     value: String, //json string
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct UserBase {
     pub name: String,
     pub phone: String,
@@ -34,7 +33,7 @@ pub struct UserBase {
     pub permissions: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct UserProfile {
     pub _id: String,
     pub create_at: DateTime<Utc>,
@@ -315,40 +314,6 @@ fn build_obj_id(id: &str) -> Result<ObjectId, (StatusCode, String)> {
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })?;
     Ok(oid)
-}
-/// valid the auth token
-/// if invalid return status code 401
-fn permission_check(
-    headers: &HeaderMap,
-    fn_name: &str,
-    arg: &str,
-) -> Result<(), (StatusCode, String)> {
-    if let Some(auth) = headers.get("authorization") {
-        let token = auth.to_str().unwrap();
-        match verify_token(token) {
-            Ok(p) => {
-                //TODO: permission check
-                info!(
-                    "{} invoke {} on {} at {}",
-                    p.user_base.name,
-                    fn_name,
-                    arg,
-                    Utc::now()
-                );
-                Ok(())
-            }
-            Err(e) => {
-                error!("verify_token failed, {:?}", e);
-                Err((StatusCode::UNAUTHORIZED, e.to_string()))
-            }
-        }
-    } else {
-        error!("missing authecication information");
-        Err((
-            StatusCode::UNAUTHORIZED,
-            "missing authecication information".to_string(),
-        ))
-    }
 }
 
 #[cfg(test)]

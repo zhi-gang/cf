@@ -1,4 +1,4 @@
-//! The module to wrap MongoDB features
+//! The module to test MongoDB features
 
 use futures::stream::TryStreamExt;
 use mongodb::{
@@ -156,4 +156,26 @@ mod test {
         println!("sss {:?}", f2);
         c.delete_many(doc! {"key":"a"}, None).await.expect("2");
     }
+
+
+    #[derive(Debug, Serialize, Deserialize)]
+    struct UserRole {
+        pub _id: Bson,
+        pub key: String,
+        pub values: Vec<String>,
+    }
+    #[tokio::test]
+    async fn test3() {
+        let client = Client::with_uri_str("mongodb://127.0.0.1:27017")
+            .await
+            .expect("connect to db");
+        let db = client.database("user");
+        let c: Collection<UserRole> = db.collection("data");
+        let mut cursor = c.find(doc! {}, None).await.expect("2");
+        
+        while let Some(data) = cursor.try_next().await.expect("3") {
+            println!("d {data:?}");
+        }
+    }
+    
 }

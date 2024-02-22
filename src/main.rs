@@ -3,6 +3,7 @@ use axum::Router;
 use cf::auth;
 use cf::config::CfConfig;
 use cf::user::{create_user, delete_user, find_user_by_id, find_user_by_name, get_number_of_all_users, get_user_in_page, update_user};
+use cf::user_config::get_user_cfg_data;
 use mongodb::{Client, Database};
 use tower_http::cors::Any;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
@@ -82,6 +83,10 @@ fn user_router(app: Router, user_db: &Database) -> Router {
     .route(
         "/cf/user/pagi",
         post(get_user_in_page).with_state(user_db.clone()),
+    )
+    .route(
+        "/cf/user/cfg",
+        get(get_user_cfg_data).with_state(user_db.clone()),
     )
 }
 fn auth_router(app: Router, user_db: &Database) -> Router {
